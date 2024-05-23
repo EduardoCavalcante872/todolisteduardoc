@@ -66,13 +66,26 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     }
   }
 
+  void _archiveTask(int index) {
+    setState(() {
+      archivedTasks.add(tasks[index]);
+      tasks.removeAt(index);
+    });
+  }
+
   void _navigateToArchivedTasks(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) =>
-              ArchivedTasksScreen(archivedTasks: archivedTasks)),
+          builder: (context) => ArchivedTasksScreen(
+              archivedTasks: archivedTasks, deleteTask: _deleteArchivedTask)),
     );
+  }
+
+  void _deleteArchivedTask(int index) {
+    setState(() {
+      archivedTasks.removeAt(index);
+    });
   }
 
   @override
@@ -113,9 +126,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 ElevatedButton(
                   onPressed: _addTask,
                   style: ElevatedButton.styleFrom(
-                    primary: Colors.blue,
+                    backgroundColor: Colors.blue,
+                    textStyle: TextStyle(color: Colors.white),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(0),
+                    ),
                   ),
-                  child: Text('Adicionar'),
+                  child: Text('Adicionar', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -135,7 +152,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToArchivedTasks(context),
         backgroundColor: Colors.blue,
-        child: Icon(Icons.access_time),
+        child: Icon(Icons.access_time, color: Colors.white),
       ),
     );
   }
@@ -191,6 +208,11 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         );
                       }).toList(),
                     ),
+                    IconButton(
+                      icon: Icon(Icons.archive, color: Colors.blue),
+                      onPressed: () => _archiveTask(
+                          tasks.indexWhere((task) => task == tasksToShow[index])),
+                    ),
                   ],
                 ),
               ),
@@ -202,10 +224,22 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 }
 
-class ArchivedTasksScreen extends StatelessWidget {
+class ArchivedTasksScreen extends StatefulWidget {
   final List<Task> archivedTasks;
+  final Function(int) deleteTask;
 
-  ArchivedTasksScreen({required this.archivedTasks});
+  ArchivedTasksScreen({required this.archivedTasks, required this.deleteTask});
+
+  @override
+  _ArchivedTasksScreenState createState() => _ArchivedTasksScreenState();
+}
+
+class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
+  void _deleteTask(int index) {
+    setState(() {
+      widget.deleteTask(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -229,12 +263,16 @@ class ArchivedTasksScreen extends StatelessWidget {
       body: Container(
         color: Colors.white,
         child: ListView.separated(
-          itemCount: archivedTasks.length,
+          itemCount: widget.archivedTasks.length,
           itemBuilder: (context, index) {
             return ListTile(
               title: Text(
-                archivedTasks[index].name,
+                widget.archivedTasks[index].name,
                 style: TextStyle(color: Colors.black),
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _deleteTask(index),
               ),
             );
           },
